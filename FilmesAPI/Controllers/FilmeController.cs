@@ -1,9 +1,7 @@
 ﻿using FilmesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace FilmesAPI.Controllers
 {
@@ -12,22 +10,33 @@ namespace FilmesAPI.Controllers
     public class FilmeController : ControllerBase
     {
         private static List<Filme> _filmes { get; set; } = new List<Filme>();
+        private static int id = 1;
 
         [HttpPost]
         public IActionResult AdicionarFilme([FromBody] Filme filme)
         {
-            if (String.IsNullOrWhiteSpace(filme.Titulo) || String.IsNullOrWhiteSpace(filme.Diretor) || String.IsNullOrWhiteSpace(filme.Genero) || String.IsNullOrWhiteSpace(filme.Duracao.ToString()))
-                return BadRequest();
-
+            filme.Id = id;
             _filmes.Add(filme);
+            id++;
 
-            return Ok();
+            return CreatedAtAction(nameof(RetornaFilmePorId), new { Id = filme.Id }, filme);
         }
 
         [HttpGet]
         public IActionResult RetornaFilmes()
         {
             return Ok(_filmes);
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult RetornaFilmePorId(int id)
+        {
+            var filme = _filmes.FirstOrDefault(x => x.Id == id);
+
+            if (filme == null)
+                return NotFound();
+            
+            return Ok(filme);
         }
     }
 }
