@@ -1,0 +1,12 @@
+﻿# Visual Studio Build Files
+obj/
+Obj/
+bin/
+*.exe
+*.dll
+debug/
+release/
+
+# Visual Studio
+.vs/
+*.vsprops
