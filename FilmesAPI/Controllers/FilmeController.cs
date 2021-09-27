@@ -1,5 +1,9 @@
-﻿using FilmesAPI.Models;
+﻿using AutoMapper;
+using FilmesAPI.Data;
+using FilmesAPI.Data.DTOs;
+using FilmesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,34 +13,68 @@ namespace FilmesAPI.Controllers
     [Route("[controller]")]
     public class FilmeController : ControllerBase
     {
-        private static List<Filme> _filmes { get; set; } = new List<Filme>();
-        private static int id = 1;
+        private FilmeContext _context { get; set; }
+        private IMapper _mapper;
+
+        public FilmeController(FilmeContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
 
         [HttpPost]
-        public IActionResult AdicionarFilme([FromBody] Filme filme)
+        public IActionResult AdicionarFilme([FromBody] CreateFilmeDto filmeDto)
         {
-            filme.Id = id;
-            _filmes.Add(filme);
-            id++;
+            var filme = _mapper.Map<Filme>(filmeDto);
 
+            _context.Add(filme);
+            _context.SaveChanges();
             return CreatedAtAction(nameof(RetornaFilmePorId), new { Id = filme.Id }, filme);
         }
 
         [HttpGet]
-        public IActionResult RetornaFilmes()
+        public IEnumerable<Filme> RetornaFilmes()
         {
-            return Ok(_filmes);
+            return _context.Filmes;
         }
 
         [HttpGet("{id}")]
         public IActionResult RetornaFilmePorId(int id)
         {
-            var filme = _filmes.FirstOrDefault(x => x.Id == id);
+            var filme = _context.Filmes.FirstOrDefault(x => x.Id == id);
 
             if (filme == null)
                 return NotFound();
-            
-            return Ok(filme);
+
+            var readFilmeDto = _mapper.Map<ReadFilmeDto>(filme);
+
+            return Ok(readFilmeDto);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult AtualizaFilme(int id, [FromBody] UpdateFilmeDto filmeDto)
+        {
+            var filme = _context.Filmes.FirstOrDefault(x => x.Id == id);
+            if (filme == null)
+                return NotFound();
+
+            _mapper.Map(filmeDto, filme);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeletarFilme(int id)
+        {
+            var filme = _context.Filmes.FirstOrDefault(x => x.Id == id);
+            if (filme == null)
+                return NotFound();
+
+            _context.Remove(filme);
+            _context.SaveChanges();
+
+            return NoContent();
         }
     }
 }
